@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useRoadmap } from './hooks/useRoadmap';
+import { useRoadmap, PendingOp } from './hooks/useRoadmap';
 import { STATUS } from './lib/constants';
 import { RoadmapTable } from './components/RoadmapTable';
 import { BottomPanels } from './components/BottomPanels';
@@ -49,9 +49,9 @@ export default function App() {
   const allItems = themes.flatMap(t => t.items);
   const countBy = (s: Status) => allItems.filter(i => i.status === s).length;
 
-  const filtered = themes.map(t => ({
+  const filtered = themes.map((t: Theme) => ({
     ...t,
-    items: t.items.filter(it => {
+    items: t.items.filter((it: RoadmapItem) => {
       const ms = !search || it.name.toLowerCase().includes(search.toLowerCase());
       const mf = fStatus === 'all' || it.status === fStatus;
       return ms && mf;
@@ -106,22 +106,28 @@ export default function App() {
       <div className="toolbar" ref={tbRef} style={{ top: 'var(--tb-top,80px)' }}>
         <div className="srch">
           <span className="srch-ico">🔍</span>
-          <input placeholder="Search items…" value={search} onChange={e => setSearch(e.target.value)} />
+          <input placeholder="Search items…" value={search} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)} />
         </div>
         <div className="tb-sep" />
         <button className="tb-btn accent" onClick={() => setModal({ type: 'item', themeId: themes[0]?.id ?? '', item: null })}>＋ Add Item</button>
         <button className="tb-btn" onClick={() => setModal({ type: 'theme', theme: null })}>＋ Add Theme</button>
         <div className="tb-sep" />
         <button className="tb-btn" onClick={() => window.print()}>🖨 Print</button>
-        <button className="tb-btn" onClick={() => setDark(d => !d)}>{dark ? '☀️ Light' : '🌙 Dark'}</button>
+        <button className="tb-btn" onClick={() => setDark((d: boolean) => !d)}>{dark ? '☀️ Light' : '🌙 Dark'}</button>
         <div className="tb-sep" />
         <ConnectionBadge connected={connected} />
-        {pending.length > 0 && <PendingStrip labels={pending.map(p => p.label)} />}
+        {pending.length > 0 && <PendingStrip labels={pending.map((p: PendingOp) => p.label)} />}
       </div>
 
       <div className="filter-bar" ref={fbRef} style={{ top: 'var(--fb-top,124px)' }}>
         <span className="filter-lbl">Filter:</span>
-        {([['all', 'All Items'], ['completed', 'Completed'], ['in-review', 'In Review'], ['in-progress', 'In Progress'], ['to-be-defined', 'To Be Defined']] as const).map(([v, l]) => (
+        {([
+          ['all',            'All Items'    ],
+          ['completed',      'Completed'    ],
+          ['in-review',      'In Review'    ],
+          ['in-progress',    'In Progress'  ],
+          ['to-be-defined',  'To Be Defined'],
+        ] as Array<['all' | Status, string]>).map(([v, l]) => (
           <button key={v} className={`ftag${fStatus === v ? ' on' : ''}`} onClick={() => setFStatus(v)}>{l}</button>
         ))}
       </div>

@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -11,7 +11,7 @@ import itemsRouter from './routes/items';
 const app = express();
 const server = createServer(app);
 
-// ── Security & parsing ────────────────────────────────────────────
+// ── Security & parsing ──────────────────────────────────────────
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(express.json({ limit: '256kb' }));
 
@@ -22,48 +22,43 @@ const allowedOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-    cb(new Error(`Origin ${origin} not allowed by CORS`));
+    return cb(new Error(`Origin ${origin} not allowed by CORS`));
   },
   credentials: true,
 }));
 
-// Basic rate limiting on mutation endpoints
-const mutateLimiter = rateLimit({
-  windowMs: 60_000,
-  limit: 120,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use(['/api/themes', '/api/items'], (req, res, next) => {
+// Rate limiting on mutation endpoints
+const mutateLimiter = rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: true, legacyHeaders: false });
+app.use(['/api/themes', '/api/items'], (req: Request, res: Response, next: NextFunction) => {
   if (req.method === 'GET') return next();
   return mutateLimiter(req, res, next);
 });
 
-// ── Routes ─────────────────────────────────────────────────────────
-app.get('/api/health', (_req, res) => {
+// ── Routes ──────────────────────────────────────────────────────
+app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ ok: true, data: { status: 'healthy', connectedClients: connectedCount() } });
 });
 
 app.use('/api/themes', themesRouter);
-app.use('/api/items', itemsRouter);
+app.use('/api/items',  itemsRouter);
 
-// 404 handler
-app.use((_req, res) => {
+// 404
+app.use((_req: Request, res: Response) => {
   res.status(404).json({ ok: false, error: 'Not found' });
 });
 
-// Error handler
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+// Error handler — 4-arg signature is required by Express
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
-  res.status(500).json({ ok: false, error: 'Internal server error' });
+  res.status(500).json({ ok: false, error: err.message ?? 'Internal server error' });
 });
 
-// ── WebSocket ────────────────────────────────────────────────────
+// ── WebSocket + HTTP server ─────────────────────────────────────
 initWss(server);
 
 const PORT = Number(process.env.PORT ?? 3001);
 server.listen(PORT, () => {
-  console.log(`🚀 API listening on http://localhost:${PORT}`);
-  console.log(`🔌 WS listening on   ws://localhost:${PORT}/ws`);
+  console.log(`🚀 API  http://localhost:${PORT}`);
+  console.log(`🔌 WS   ws://localhost:${PORT}/ws`);
 });

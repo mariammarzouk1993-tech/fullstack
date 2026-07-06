@@ -238,7 +238,11 @@ export function useRoadmap() {
   const updateItem = useCallback(async (
     id: string,
     fromThemeId: string,
-    patch: Partial<ItemInput & { themeId: string }>
+    patch: Partial<{
+      themeId: string; name: string; start: number; end: number; status: Status;
+      sub: string; desc: string; ongoingEnd: number | null; ongoingLabel: string | null;
+      position: number;
+    }>
   ) => {
     const prevThemes = themesRef.current;
     const prevItem = prevThemes.flatMap(t => t.items).find(i => i.id === id);

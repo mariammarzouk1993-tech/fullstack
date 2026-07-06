@@ -6,10 +6,10 @@ interface Props {
   themes: Theme[];
   themeId: string;
   item: RoadmapItem | null;
-  onSave: (id: string, fromThemeId: string, patch: {
-    name: string; start: number; end: number; status: Status;
-    sub: string; desc: string; ongoingEnd?: number; ongoingLabel?: string; themeId: string;
-  }) => void;
+  onSave: (id: string, fromThemeId: string, patch: Partial<{
+    themeId: string; name: string; start: number; end: number; status: Status;
+    sub: string; desc: string; ongoingEnd: number | null; ongoingLabel: string | null;
+  }>) => void;
   onCreate: (themeId: string, input: {
     name: string; start: number; end: number; status: Status;
     sub: string; desc: string; ongoingEnd?: number; ongoingLabel?: string;
@@ -33,20 +33,39 @@ export function ItemModal({ themes, themeId, item, onSave, onCreate, onDelete, o
 
   const handleSave = () => {
     if (!name.trim()) { alert('Please enter a name.'); return; }
-    const patch = {
-      name: name.trim(),
-      start: Number(start),
-      end: Number(end),
-      status,
-      sub: sub.trim(),
-      desc: desc.trim(),
-      themeId: tid,
-      ...(ongoingEnd !== '' ? { ongoingEnd: Number(ongoingEnd), ongoingLabel: ongoingLabel.trim() } : {}),
-    };
 
     if (isNew) {
-      onCreate(tid, patch);
+      const createInput: {
+        name: string; start: number; end: number; status: Status;
+        sub: string; desc: string; ongoingEnd?: number; ongoingLabel?: string;
+      } = {
+        name: name.trim(),
+        start: Number(start),
+        end: Number(end),
+        status,
+        sub: sub.trim(),
+        desc: desc.trim(),
+      };
+      if (ongoingEnd !== '') {
+        createInput.ongoingEnd = Number(ongoingEnd);
+        createInput.ongoingLabel = ongoingLabel.trim();
+      }
+      onCreate(tid, createInput);
     } else {
+      const patch: Partial<{
+        themeId: string; name: string; start: number; end: number; status: Status;
+        sub: string; desc: string; ongoingEnd: number | null; ongoingLabel: string | null;
+      }> = {
+        themeId: tid,
+        name: name.trim(),
+        start: Number(start),
+        end: Number(end),
+        status,
+        sub: sub.trim(),
+        desc: desc.trim(),
+        ongoingEnd: ongoingEnd !== '' ? Number(ongoingEnd) : null,
+        ongoingLabel: ongoingEnd !== '' ? ongoingLabel.trim() : null,
+      };
       onSave(item.id, themeId, patch);
     }
   };
