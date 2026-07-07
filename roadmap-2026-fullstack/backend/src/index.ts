@@ -57,10 +57,11 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 // ── WebSocket + HTTP server ─────────────────────────────────────
 initWss(server);
 
-const PORT = Number(process.env.PORT ?? 3001);
-const HOST = '0.0.0.0'; // bind all interfaces — required for Railway / containers
+const PORT = Number(process.env.PORT) || 3001;
+const HOST = '0.0.0.0';
 
 server.listen(PORT, HOST, () => {
   console.log(`🚀 API  http://${HOST}:${PORT}`);
   console.log(`🔌 WS   ws://${HOST}:${PORT}/ws`);
+  console.log(`📌 PORT env = ${process.env.PORT ?? '(not set — using default 3001)'}`);
 });
