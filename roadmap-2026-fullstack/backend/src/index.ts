@@ -58,7 +58,9 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 initWss(server);
 
 const PORT = Number(process.env.PORT ?? 3001);
-server.listen(PORT, () => {
-  console.log(`🚀 API  http://localhost:${PORT}`);
-  console.log(`🔌 WS   ws://localhost:${PORT}/ws`);
+const HOST = '0.0.0.0'; // bind all interfaces — required for Railway / containers
+
+server.listen(PORT, HOST, () => {
+  console.log(`🚀 API  http://${HOST}:${PORT}`);
+  console.log(`🔌 WS   ws://${HOST}:${PORT}/ws`);
 });
