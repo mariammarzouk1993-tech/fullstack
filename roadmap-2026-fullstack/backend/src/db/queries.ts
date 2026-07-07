@@ -1,4 +1,5 @@
 import { db } from './client';
+import type { InValue } from '@libsql/client';
 import type { Theme, RoadmapItem, Status } from '../types';
 
 // ── Row mappers ───────────────────────────────────────────────────
@@ -87,7 +88,7 @@ export async function deleteTheme(id: string): Promise<boolean> {
 
 export async function getThemeCount(): Promise<number> {
   const res = await db.execute('SELECT COUNT(*) as c FROM themes');
-  return Number((res.rows[0] as { c: number }).c);
+  return Number((res.rows[0] as unknown as { c: number }).c);
 }
 
 // ── Item queries ──────────────────────────────────────────────────
@@ -143,8 +144,7 @@ export interface UpdateItemInput {
 
 export async function updateItem(id: string, input: UpdateItemInput): Promise<RoadmapItem | null> {
   const sets: string[] = ["updated_at = datetime('now')"];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const args: any[] = [];
+  const args: InValue[] = [];
 
   if (input.name      !== undefined) { sets.push('name = ?');          args.push(input.name); }
   if (input.themeId   !== undefined) { sets.push('theme_id = ?');      args.push(input.themeId); }
@@ -169,5 +169,5 @@ export async function deleteItem(id: string): Promise<boolean> {
 
 export async function getItemCountForTheme(themeId: string): Promise<number> {
   const res = await db.execute({ sql: 'SELECT COUNT(*) as c FROM items WHERE theme_id = ?', args: [themeId] });
-  return Number((res.rows[0] as { c: number }).c);
+  return Number((res.rows[0] as unknown as { c: number }).c);
 }

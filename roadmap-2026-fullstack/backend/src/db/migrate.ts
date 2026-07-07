@@ -42,7 +42,7 @@ async function migrate() {
 
   // ── Seed (only if empty) ──────────────────────────────────────
   const existing = await db.execute('SELECT COUNT(*) as c FROM themes');
-  const count = Number((existing.rows[0] as { c: number }).c);
+  const count = Number((existing.rows[0] as unknown as { c: number }).c);
 
   if (count > 0) {
     console.log(`ℹ️  Skipping seed — ${count} theme(s) already exist`);
